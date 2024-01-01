@@ -5,6 +5,15 @@ from PIL import Image
 import shutil
 import tempfile
 import os
+import json
+from getpass import getpass
+import redis
+
+REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_PORT = int(os.getenv("REDIS_PORT"))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD)
 
 # Initialize Gradio client
 GRADIO_API_URL = "https://jjourney1125-swin2sr.hf.space/"
@@ -37,6 +46,15 @@ def predict_and_show_image(uploaded_file):
 clientId = os.getenv("CLIENT_ID")
 domain = os.getenv("DOMAIN")
 user_info = login_button(clientId, domain=domain)
+
+if r.ping():
+    try:
+        r.set(f"{clientId}:session", json.dumps(user_info))
+        st.write("User info has been successfully stored in Redis!")
+    except Exception as e:
+        st.error(f"Error occurred while trying to store user info: {str(e)}")
+else:
+    st.error("Unable to reach Redis server.")
 
 # Check if user is logged in
 if True:
